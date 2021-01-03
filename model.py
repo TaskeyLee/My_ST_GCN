@@ -8,11 +8,20 @@ import dgl
 import dgl.nn.pytorch as dglnn
 from graph_generator import generate_graph
 from tensorboardX import SummaryWriter
+import Cartesian2Polar 
 
 # 读入数据集
 train_tensor, train_label = torch.load('../dataset/train.pkl')
 valid_tensor, valid_label = torch.load('../dataset/valid.pkl')
 test_tensor , test_label  = torch.load('../dataset/test.pkl')
+
+coordinate_normalization = Cartesian2Polar.Cartesian2Polar(train_tensor)
+normalized_polar_distance = coordinate_normalization.coordinate2distance()
+normalized_polar_angle = coordinate_normalization.coordinate2angle()
+normalized_polar_distance = torch.unsqueeze(normalized_polar_distance, dim=3)
+# normalized_polar_train_tensor = torch.cat((normalized_polar_distance, normalized_polar_angle))
+
+
 
 # Dataloader使用的数据处理函数
 def collate(samples):
