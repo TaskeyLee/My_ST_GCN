@@ -16,7 +16,7 @@ import numpy as np
 # Right Hip: 12
 # Right Knee: 13
 # Right Ankle：14
-train_tensor, train_label = torch.load('../dataset/train.pkl') # 导入数据集
+# train_tensor, train_label = torch.load('../dataset/train.pkl') # 导入数据集
 # 原始数据集的关节点坐标都为世界坐标系，数值很大且分布分散
 # 所以定义一个class，用于将世界笛卡尔坐标系转为
 # 1:相对center的极坐标
@@ -151,8 +151,8 @@ class Cartesian2Polar():
 
         return normalized_location_tensor
 
-coordinate_normalization = Cartesian2Polar(train_tensor)
+# coordinate_normalization = Cartesian2Polar(train_tensor)
 # normalized_polar_distance = coordinate_normalization.coordinate2distance()
 # normalized_polar_angle = coordinate_normalization.coordinate2angle()
 # relative_polar = coordinate_normalization.relative_polar()
-Relative_Cartesian = coordinate_normalization.Relative_Cartesian()
+# Relative_Cartesian = coordinate_normalization.Relative_Cartesian()
