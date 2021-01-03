@@ -16,9 +16,13 @@ import numpy as np
 # Right Hip: 12
 # Right Knee: 13
 # Right Ankle：14
-# train_tensor, train_label = torch.load('../dataset/train.pkl') # 导入数据集
+train_tensor, train_label = torch.load('../dataset/train.pkl') # 导入数据集
 # 原始数据集的关节点坐标都为世界坐标系，数值很大且分布分散
-# 所以定义一个class，用于将世界笛卡尔坐标系转为相对center的极坐标系，其中选spine为center
+# 所以定义一个class，用于将世界笛卡尔坐标系转为
+# 1:相对center的极坐标
+# 2:相对向心节点的极坐标
+# 3:相对center的笛卡尔坐标
+# 4:相对向心节点的笛卡尔坐标
 class Cartesian2Polar():
     def __init__(self, dataset):
         # 如果传入的dataset是tensor，则将其转为numpy
@@ -116,8 +120,39 @@ class Cartesian2Polar():
         normalized_angle_tensor = torch.tensor(normalized_angle) # 把numpy重新转为tensor供神经网络使用
         return normalized_distance_tensor, normalized_angle_tensor
 
+    
+    def Relative_Cartesian(self): # 转换为相对向心节点的笛卡尔坐标
+        dic = {0:1, 3:1, 6:1, 4:3, 5:4, 7:6, 8:7, 2:2, 1:2, 9:2, 12:2, 10:9, 11:10, 13:12, 14:13}
+        normalized_location = [] 
+        for train_data in self.dataset: # 遍历所有172个视频数据
+            normalized_data_location = []
+            for idx, body_points in enumerate(train_data): # 每个视频有32帧，遍历
+                distance_max = 0
+                normalized_body_points_location = []
+                for idx, points in enumerate(body_points): # 遍历一帧中的每个关节点
+                    center = body_points[dic[idx]] # 把spine作为人体中心
+                    # 求节点相对坐标
+                    location = points - center
+                    distance = np.sqrt(np.sum(np.square(location))) # 求每个关节点到center的欧氏距离
+                    if distance > distance_max: # 求得这一组距离中的最大值，用于后续归一化
+                        distance_max = distance
+                        
+                    normalized_body_points_location.append(location) # 把当前关节点相对center的坐标存入
+                
+                normalized_body_points_location /= distance_max # 归一化处理
+                normalized_data_location.append(normalized_body_points_location) # 把15个关节点组成的一帧的相对归一化坐标存入（15关节点组成一帧）
 
-# coordinate_normalization = Cartesian2Polar(train_tensor)
+           
+            normalized_location.append(normalized_data_location) # 把32帧的关节点相对归一化坐标存入（32帧组成一个视频）
+        
+        normalized_location = np.array(normalized_location)
+        
+        normalized_location_tensor = torch.tensor(normalized_location) # 把numpy重新转为tensor供神经网络使用
+
+        return normalized_location_tensor
+
+coordinate_normalization = Cartesian2Polar(train_tensor)
 # normalized_polar_distance = coordinate_normalization.coordinate2distance()
 # normalized_polar_angle = coordinate_normalization.coordinate2angle()
 # relative_polar = coordinate_normalization.relative_polar()
+Relative_Cartesian = coordinate_normalization.Relative_Cartesian()
