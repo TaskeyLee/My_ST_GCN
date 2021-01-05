@@ -1,10 +1,12 @@
-# import torch
+import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 # import numpy as np
 import dgl
 import dgl.nn.pytorch as dglnn
+
+torch.manual_seed(2021)
 
 class ST_GCN(nn.Module):
     def __init__(self, in_dim_1, in_dim_2, hidden_dim1, hidden_dim2, hidden_dim3, n_class, data_type): # in_dim：每个节点输入特征维度，in_dim：每个节点输出特征维度

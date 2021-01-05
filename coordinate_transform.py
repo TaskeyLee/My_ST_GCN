@@ -23,7 +23,7 @@ import numpy as np
 # 2:相对向心节点的极坐标
 # 3:相对center的笛卡尔坐标
 # 4:相对向心节点的笛卡尔坐标
-class Cartesian2Polar():
+class Coordinate_transform():
     def __init__(self, dataset):
         # 如果传入的dataset是tensor，则将其转为numpy
         if dataset.type() == 'torch.DoubleTensor' or dataset.type() == 'torch.IntTensor':
@@ -130,7 +130,38 @@ class Cartesian2Polar():
                 distance_max = 0
                 normalized_body_points_location = []
                 for idx, points in enumerate(body_points): # 遍历一帧中的每个关节点
-                    center = body_points[dic[idx]] # 把spine作为人体中心
+                    center = body_points[dic[idx]] # 根据预先建立的字典，查找与当前节点对应的向心节点
+                    # 求节点相对坐标
+                    location = points - center
+                    distance = np.sqrt(np.sum(np.square(location))) # 求每个关节点到center的欧氏距离
+                    if distance > distance_max: # 求得这一组距离中的最大值，用于后续归一化
+                        distance_max = distance
+                        
+                    normalized_body_points_location.append(location) # 把当前关节点相对center的坐标存入
+                
+                normalized_body_points_location /= distance_max # 归一化处理
+                normalized_data_location.append(normalized_body_points_location) # 把15个关节点组成的一帧的相对归一化坐标存入（15关节点组成一帧）
+
+           
+            normalized_location.append(normalized_data_location) # 把32帧的关节点相对归一化坐标存入（32帧组成一个视频）
+        
+        normalized_location = np.array(normalized_location)
+        
+        normalized_location_tensor = torch.tensor(normalized_location) # 把numpy重新转为tensor供神经网络使用
+
+        return normalized_location_tensor
+    
+    
+    def Center_Cartesian(self): # 转换为相对center的笛卡尔坐标
+        normalized_location = [] 
+        for train_data in self.dataset: # 遍历所有172个视频数据
+            normalized_data_location = []
+            for idx, body_points in enumerate(train_data): # 每个视频有32帧，遍历
+                center = body_points[2] # 把spine作为人体中心
+                distance_max = 0
+                normalized_body_points_location = []
+                for idx, points in enumerate(body_points): # 遍历一帧中的每个关节点
+                    
                     # 求节点相对坐标
                     location = points - center
                     distance = np.sqrt(np.sum(np.square(location))) # 求每个关节点到center的欧氏距离

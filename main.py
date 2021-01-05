@@ -9,7 +9,7 @@ from tensorboardX import SummaryWriter
 import torch.optim as optim
 
 # 载入数据
-train_loader, valid_loader = dataloader.dataloader()
+train_loader, valid_loader = dataloader.dataloader('relative_cartesian')
 
 # 定义保存loss、acc的函数
 def data_write_csv(file_name, datas):  # file_name为写入CSV文件的路径，datas为要写入数据列表
@@ -20,9 +20,9 @@ def data_write_csv(file_name, datas):  # file_name为写入CSV文件的路径，
     print("保存文件成功，处理结束")
     
 # 模型验证函数
-def evaluate(model, dataloader, epoch):
+def evaluate(model, data, epoch):
     count = 0
-    for features, labels in dataloader:
+    for features, labels in data:
         model.eval()
         with torch.no_grad():
             output = model(features, features.ndata)
@@ -33,7 +33,7 @@ def evaluate(model, dataloader, epoch):
             correct = torch.sum(pred == labels)
             # print('Correct number: {}'.format(correct))
             count += correct
-    acc = count.item() * 1.0 / len(dataloader.dataset)   
+    acc = count.item() * 1.0 / len(data.dataset)   
     
     return acc
 
@@ -41,7 +41,7 @@ def evaluate(model, dataloader, epoch):
 # g.ndata['feature'] = train_tensor[0].permute(1,0,2)
 
 model = ST_GCN(3, 0, 64, 128, 256, 10, 'Cartesian')
-optimizer = optim.Adam(model.parameters(), lr = 0.001)
+optimizer = optim.Adam(model.parameters(), lr = 0.0001)
 
 # 统计模型参数量
 num_params = 0
@@ -52,14 +52,19 @@ print('The number of parameters: {}'.format(num_params))
 
 one_hot = torch.nn.functional.one_hot(torch.arange(10), 10)
 
-writer1 = SummaryWriter('logs/writer1')
-writer2 = SummaryWriter('logs/writer2')
+# writer1 = SummaryWriter('logs/writer1')
+# writer2 = SummaryWriter('logs/writer2')
+# writer3 = SummaryWriter('logs/writer3')
+writer4 = SummaryWriter('logs/writer4')
 
+# 三个空列表，存储训练过程的loss、train accuracy、valid accuracy
 lossData=[[]]
 train_acc_Data=[[]]
 valid_acc_Data=[[]]
 
-for epoch in range(80):
+# 开始训练
+index = 0
+for epoch in range(100):
     for idx, (feats, labels) in enumerate(train_loader):
         # labels = one_hot[labels.numpy()]
         model.train()
@@ -70,13 +75,13 @@ for epoch in range(80):
         train_acc = evaluate(model, train_loader, epoch)
         valid_acc = evaluate(model, valid_loader, epoch)
         
-        lossData.append([iter,loss.data.numpy()])
-        train_acc_Data.append([iter,train_acc])
-        valid_acc_Data.append([iter,valid_acc])
+        lossData.append([index,loss.data.numpy()])
+        train_acc_Data.append([index,train_acc])
+        valid_acc_Data.append([index,valid_acc])
             
-        writer1.add_scalar('Train_Loss', loss, global_step = 16 * epoch + idx)
-        writer1.add_scalar('Train_Accuracy', train_acc, global_step = 16 * epoch + idx)
-        writer1.add_scalar('Valid_Accuracy', valid_acc, global_step = 16 * epoch + idx)
+        writer4.add_scalar('Train_Loss', loss, global_step = 16 * epoch + idx)
+        writer4.add_scalar('Train_Accuracy', train_acc, global_step = 16 * epoch + idx)
+        writer4.add_scalar('Valid_Accuracy', valid_acc, global_step = 16 * epoch + idx)
         print('Epoch: {}; Loss: {}'.format(epoch, loss.squeeze()))
         print('Epoch: {}; Train_Accuracy: {} %'.format(epoch, train_acc * 100))
         print('Epoch: {}; Valid_Accuracy: {} %'.format(epoch, valid_acc * 100))
@@ -84,7 +89,27 @@ for epoch in range(80):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
+        
+        index += 1
 
-data_write_csv(".\\loss.csv", lossData)
-data_write_csv(".\\train_acc.csv", train_acc_Data)
-data_write_csv(".\\valid_acc.csv", valid_acc_Data)
+# 将loss、acc保存为csv文件
+# 1: center + polar
+# 2: relative + polar
+# 3: center + cartesian
+# 4: relative + cartesian
+
+# data_write_csv(".\\loss1.csv", lossData)
+# data_write_csv(".\\train_acc1.csv", train_acc_Data)
+# data_write_csv(".\\valid_acc1.csv", valid_acc_Data)
+
+# data_write_csv(".\\loss2.csv", lossData)
+# data_write_csv(".\\train_acc2.csv", train_acc_Data)
+# data_write_csv(".\\valid_acc2.csv", valid_acc_Data)
+
+# data_write_csv(".\\loss3.csv", lossData)
+# data_write_csv(".\\train_acc3.csv", train_acc_Data)
+# data_write_csv(".\\valid_acc3.csv", valid_acc_Data)
+
+data_write_csv(".\\loss4.csv", lossData)
+data_write_csv(".\\train_acc4.csv", train_acc_Data)
+data_write_csv(".\\valid_acc4.csv", valid_acc_Data)
