@@ -7,29 +7,23 @@ import dgl
 import dgl.nn.pytorch as dglnn
 from graph_generator import generate_graph
 from tensorboardX import SummaryWriter
-import coordinate_transform
+import coordinate_transform2d
 import codecs
 import csv
 
-torch.manual_seed(666)
-
 def dataloader(data_type):
     # 读入数据集
-    train1_tensor, train1_label = torch.load('../dataset/train.pkl')
-    train2_tensor, train2_label = torch.load('../dataset/valid.pkl')
+    train_tensor, train_label = torch.load('data/train.pkl')
     
-    train_tensor = torch.cat([train1_tensor, train2_tensor], dim = 0)
-    train_label = torch.cat([train1_label, train2_label], dim = 0)
-    
-    valid_tensor , valid_label  = torch.load('../dataset/test.pkl')
+    valid_tensor, valid_label = torch.load('data/valid.pkl')
 
     if data_type == 'center_polar': 
         # 将世界坐标系+笛卡尔坐标系转为相对中心坐标系+极坐标系
-        coordinate_normalization = coordinate_transform.Coordinate_transform(train_tensor)
+        coordinate_normalization = coordinate_transform2d.Coordinate_transform(train_tensor)
         train_normalized_polar_distance, train_normalized_polar_angle = coordinate_normalization.Center_Polar()
         train_normalized_polar_distance = torch.unsqueeze(train_normalized_polar_distance, dim=3)
         
-        coordinate_normalization = coordinate_transform.Coordinate_transform(valid_tensor)
+        coordinate_normalization = coordinate_transform2d.Coordinate_transform(valid_tensor)
         valid_normalized_polar_distance, valid_normalized_polar_angle = coordinate_normalization.Center_Polar()
         valid_normalized_polar_distance = torch.unsqueeze(valid_normalized_polar_distance, dim=3)
     
@@ -37,11 +31,11 @@ def dataloader(data_type):
     
     if data_type == 'relative_polar': 
         # 将世界坐标系+笛卡尔坐标系转为相对向心节点坐标系+极坐标系
-        coordinate_normalization = coordinate_transform.Coordinate_transform(train_tensor)
+        coordinate_normalization = coordinate_transform2d.Coordinate_transform(train_tensor)
         train_normalized_polar_distance, train_normalized_polar_angle = coordinate_normalization.Relative_Polar()
         train_normalized_polar_distance = torch.unsqueeze(train_normalized_polar_distance, dim=3)
         
-        coordinate_normalization = coordinate_transform.Coordinate_transform(valid_tensor)
+        coordinate_normalization = coordinate_transform2d.Coordinate_transform(valid_tensor)
         valid_normalized_polar_distance, valid_normalized_polar_angle = coordinate_normalization.Relative_Polar()
         valid_normalized_polar_distance = torch.unsqueeze(valid_normalized_polar_distance, dim=3)
     
@@ -49,18 +43,18 @@ def dataloader(data_type):
     
     if data_type == 'center_cartesian': 
         # 将世界坐标系+笛卡尔坐标系转为相对向心节点坐标系+笛卡尔坐标系
-        coordinate_normalization = coordinate_transform.Coordinate_transform(train_tensor)
+        coordinate_normalization = coordinate_transform2d.Coordinate_transform(train_tensor)
         train_normalized_cartesian_location = coordinate_normalization.Center_Cartesian()
         
-        coordinate_normalization = coordinate_transform.Coordinate_transform(valid_tensor)
+        coordinate_normalization = coordinate_transform2d.Coordinate_transform(valid_tensor)
         valid_normalized_cartesian_location = coordinate_normalization.Center_Cartesian()
         
     if data_type == 'relative_cartesian': 
         # 将世界坐标系+笛卡尔坐标系转为相对向心节点坐标系+笛卡尔坐标系
-        coordinate_normalization = coordinate_transform.Coordinate_transform(train_tensor)
+        coordinate_normalization = coordinate_transform2d.Coordinate_transform(train_tensor)
         train_normalized_cartesian_location = coordinate_normalization.Relative_Cartesian()
         
-        coordinate_normalization = coordinate_transform.Coordinate_transform(valid_tensor)
+        coordinate_normalization = coordinate_transform2d.Coordinate_transform(valid_tensor)
         valid_normalized_cartesian_location = coordinate_normalization.Relative_Cartesian()
         
         
@@ -127,5 +121,4 @@ def dataloader(data_type):
     
     
     return train_loader, valid_loader
-
-train_loader, valid_loader = dataloader('center_polar')
+train, valid = dataloader('center_polar')
