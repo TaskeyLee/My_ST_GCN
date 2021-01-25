@@ -9,10 +9,11 @@ from model import ST_GCN
 from tensorboardX import SummaryWriter
 import torch.optim as optim
 import time
+# import generate_graph
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # 载入数据
-train_loader, valid_loader = dataloader.dataloader('relative_cartesian')
+train_loader, valid_loader = dataloader.dataloader('relative_polar')
 
 # 权重初始化
 # def weights_init(m):
@@ -50,7 +51,7 @@ def evaluate(model, data, epoch):
 # g = generate_graph() # graph有15个node，29条edge
 # g.ndata['feature'] = train_tensor[0].permute(1,0,2)
 
-model = ST_GCN(3, 0, 64, 128, 256, 10, 'Cartesian')
+model = ST_GCN(3, 0, 64, 128, 256, 10, 'Polar')
 model.to(DEVICE)
 
 # weights_init(model)
@@ -67,21 +68,22 @@ print('The number of parameters: {}'.format(num_params))
 one_hot = torch.nn.functional.one_hot(torch.arange(10), 10)
 
 # center_polar = SummaryWriter('logs/center_polar')
-# relative_polar = SummaryWriter('logs/relative_polar')
+relative_polar = SummaryWriter('logs/relative_polar')
 # center_cartesian = SummaryWriter('logs/center_cartesian')
-relative_cartesian = SummaryWriter('logs/relative_cartesian')
+# relative_cartesian = SummaryWriter('logs/relative_cartesian')
 
 # 三个空列表，存储训练过程的loss、train accuracy、valid accuracy
 lossData=[[]]
 train_acc_Data=[[]]
 valid_acc_Data=[[]]
 
-# 开始训练
 index = 0
 step = 1
-for epoch in range(100):
+
+start = time.time()
+
+for epoch in range(500):
     for idx, (feats, labels) in enumerate(train_loader):
-        start = time.time()
         # labels = one_hot[labels.numpy()]
         model.train()
         
@@ -97,10 +99,10 @@ for epoch in range(100):
         lossData.append([index,loss.to('cpu').data.numpy()])
         train_acc_Data.append([index,train_acc])
         valid_acc_Data.append([index,valid_acc])
-            
-        relative_cartesian.add_scalar('Train_Loss', loss, global_step = step)
-        relative_cartesian.add_scalar('Train_Accuracy', train_acc, global_step = step)
-        relative_cartesian.add_scalar('Valid_Accuracy', valid_acc, global_step = step)
+        
+        relative_polar.add_scalar('Train_Loss', loss, global_step = step)
+        relative_polar.add_scalar('Train_Accuracy', train_acc, global_step = step)
+        relative_polar.add_scalar('Valid_Accuracy', valid_acc, global_step = step)
         print('Epoch: {}; Loss: {}'.format(epoch, loss.squeeze()))
         print('Epoch: {}; Train_Accuracy: {} %'.format(epoch, train_acc * 100))
         print('Epoch: {}; Valid_Accuracy: {} %'.format(epoch, valid_acc * 100))
@@ -111,11 +113,12 @@ for epoch in range(100):
         
         index += 1
         
-        stop = time.time()
-        
         step += 1
         
-        print('Time:', stop - start)
+        
+
+stop = time.time()
+print('Time:', stop - start)
 
 # 将loss、acc保存为csv文件
 # 1: center + polar
@@ -127,14 +130,14 @@ for epoch in range(100):
 # data_write_csv(".\\train_acc1.csv", train_acc_Data)
 # data_write_csv(".\\valid_acc1.csv", valid_acc_Data)
 
-# data_write_csv(".\\loss2.csv", lossData)
-# data_write_csv(".\\train_acc2.csv", train_acc_Data)
-# data_write_csv(".\\valid_acc2.csv", valid_acc_Data)
+data_write_csv(".\\loss2.csv", lossData)
+data_write_csv(".\\train_acc2.csv", train_acc_Data)
+data_write_csv(".\\valid_acc2.csv", valid_acc_Data)
 
 # data_write_csv(".\\loss3.csv", lossData)
 # data_write_csv(".\\train_acc3.csv", train_acc_Data)
 # data_write_csv(".\\valid_acc3.csv", valid_acc_Data)
 
-data_write_csv(".\\loss4.csv", lossData)
-data_write_csv(".\\train_acc4.csv", train_acc_Data)
-data_write_csv(".\\valid_acc4.csv", valid_acc_Data)
+# data_write_csv(".\\loss4.csv", lossData)
+# data_write_csv(".\\train_acc4.csv", train_acc_Data)
+# data_write_csv(".\\valid_acc4.csv", valid_acc_Data)
